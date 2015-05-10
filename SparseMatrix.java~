@@ -1,0 +1,126 @@
+/*This class contains methods for converting a matrix to a sparse
+ * representation
+ * 
+ * @author Ny Pham
+ * */
+
+public class SparseMatrix{
+  //stores the non-zero values of the input matrix
+  private double[] nonZeroValues;
+  //stores the column positions of each of the non-zero values
+  private int[] columnPositions;
+  //stores the index of the beginning of each row of the matrix
+  private int[] rowStarts;
+  
+  /*initializes nonZeroValues, columnPositions, and rowStarts
+   * 
+   * @param nonZeroValues - array of non-zero values, assuming input does not contain zeros
+   * @param columnPositions - array of column positions for each non-zerov value
+   * @param rowStarts - array of non-zero indices for which each row begins
+   */
+  public SparseMatrix(double[] nonZeroValues, int[] columnPositions, int[] rowStarts){
+    this.nonZeroValues = nonZeroValues;
+    this.columnPositions = columnPositions;
+    this.rowStarts = rowStarts;
+  }
+  
+  /*initializes nonZeroValues, columnPositions, and rowStarts
+   * 
+   * @param matrix - the matrix that will be used to initialize nonZeroValues, columnPositions, and rowStarts
+   */
+  public SparseMatrix(double[][] matrix){
+    int numberOfNonZero = 0;                         //used to initialize lengths of nonZeroValues[] and columnPositions[]
+    /*the loop goes through each element in each row and increments numberOfNonZero
+     *for each non-zero value found*/
+    for(int i = 0; i < matrix.length; i++){
+      for(int j = 0; j < matrix[i].length; j++){
+        if(matrix[i][j] != 0.0){
+          numberOfNonZero++;
+        }
+      }
+    }
+    nonZeroValues = new double[numberOfNonZero];
+    columnPositions = new int[numberOfNonZero];
+    rowStarts = new int[matrix.length + 1];
+    int arrayIndex = 0;                               //stores the index position for nonZeroValues[] and columnPositions[]
+    int nonZeroCounter = 0;                           //stores the index of the non-zero values in the matrix as the loop goes through each element
+    int rowStartsIndex = 0;                           //stores the index of rowStarts[]
+    /*the loop goes through each element in the matrix and checks whether the
+     * element is non-zero. If it is non-zero then the value is appended to nonZeroValues,
+     * the column position is appended to columnPositions, and if it begins a row, the index
+     * of the non-zero is appended to rowStarts. If there is a row without non-zero elements
+     * then the previous non-zero index is repeated in row-starts.*/
+    for(int i = 0; i < matrix.length; i++){
+      boolean hasRowStarted = false;                 //stores whether the index for non-zero that begins a row has been appended to rowStarts yet
+      for(int j = 0; j < matrix[i].length; j++){
+        if(matrix[i][j] != 0.0){
+          nonZeroValues[arrayIndex] = matrix[i][j];
+          columnPositions[arrayIndex] = j;
+          if(hasRowStarted == false){
+            rowStarts[rowStartsIndex] = nonZeroCounter;
+            rowStartsIndex++;
+            hasRowStarted = true;
+          }
+          arrayIndex++;
+          nonZeroCounter++;
+        }
+        if(matrix[i][j] == 0 && j == matrix[i].length - 1 && hasRowStarted == false){
+          rowStarts[rowStartsIndex] = nonZeroCounter;
+          rowStartsIndex++;
+        }
+      }
+    }
+    rowStarts[rowStartsIndex] = nonZeroValues.length;
+  }
+  
+  /*returns an array of non-zero values in the matrix*/
+  public double[] getNonZeroValues(){
+    return nonZeroValues;
+  }
+  
+  /*returns an array of the column positions of the non-zero values*/
+  public int[] getColumnPositions(){
+    return columnPositions;
+  }
+  
+  /*returns an array of the indices at which a row begins in the matrix*/
+  public int[] getRowStarts(){
+    return rowStarts;
+  }
+  
+  /*returns a 2D array that contains the untruncated matrix*/
+  public double[][] getFullMatrix(){
+    int numberOfColumns = 0;                                                             //stores the number of columns in matrix
+    /*this loop looks for the max value in columnPositions by 
+     * comparing element in the array*/
+    for(int i = 0; i < columnPositions.length; i++){
+      if(columnPositions[i] > numberOfColumns)
+        numberOfColumns = columnPositions[i];
+    }
+    double[][] fullMatrix = new double[rowStarts.length - 1][numberOfColumns + 1];       //the matrix to be returned
+    /*this loop goes through the new matrix and initilizes each (i,j) to
+     * be zero. */
+    for(int i = 0; i < fullMatrix.length; i++){
+      for(int j = 0; j < fullMatrix[i].length; j++){
+        fullMatrix[i][j] = 0;
+      }
+    }
+    int rowStartIndex = 0;
+    int nonZeroValuesIndex = 0;
+    /*this loop goes through each row using rowStarts and checks if there are non-zero
+     * values in the row. if there are, then the non-zero values are placed in their respective
+     * column positions in the output matrix*/
+    while(rowStartIndex < rowStarts.length - 1){
+      int numberOfValuesInRow = rowStarts[rowStartIndex + 1] - rowStarts[rowStartIndex];   //stores the number of non-zero values in a row
+      if(numberOfValuesInRow > 0){
+        for(int i = nonZeroValuesIndex; i < rowStarts[rowStartIndex + 1]; i++){
+          fullMatrix[rowStartIndex][columnPositions[nonZeroValuesIndex]] = nonZeroValues[nonZeroValuesIndex];
+          nonZeroValuesIndex++;
+        }
+      }
+    rowStartIndex++;
+    }
+    return fullMatrix;
+  }
+  
+}

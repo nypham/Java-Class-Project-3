@@ -1,0 +1,1 @@
+public class NotInvertibleException extends Exception{}
